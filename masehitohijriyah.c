@@ -6,6 +6,7 @@
 //  Deklarasi Prosedur
 void menu();
 void konversiHijriyah();
+void konversiKeHijriyah(int tanggal, int bulan, int tahun);
 int validasiAngka(int min, int max, char *teks);
 int validasiTahun(char *teks);
 int isLeapYear(int year);
@@ -119,16 +120,11 @@ int isLeapYear(int year) {
 }
 
 //======================================================
-//  Fungsi konversi Masehi ke Hijriyah
+//  Fungsi konversi Masehi ke Hijriyah (ALGORITMA YANG LEBIH AKURAT)
 void konversiKeHijriyah(int tanggal, int bulan, int tahun) {
-    // Konstanta untuk perhitungan konversi
-    // 1 Muharram 1 Hijriyah = 16 Juli 622 Masehi
-    // Rasio: 1 tahun Hijriyah = 354.367056 hari
-    //        1 tahun Masehi = 365.2425 hari
-    
-    // Tanggal referensi: 1 Januari 2000 M = 24 Ramadan 1420 H
-    int refMasehi = 2451545; // JD untuk 1 Januari 2000
-    int refHijriyah = 1420 * 354 + 8 * 30 + 24; // Perkiraan hari sejak 1 Muharram 1 H
+    // Algoritma konversi yang lebih sederhana dan akurat
+    // Berdasarkan perhitungan: 1 tahun Hijriyah ≈ 354.36708 hari
+    // Tanggal referensi: 16 Juli 622 M = 1 Muharram 1 H
     
     // Hitung Julian Day untuk tanggal input
     int a = (14 - bulan) / 12;
@@ -137,15 +133,17 @@ void konversiKeHijriyah(int tanggal, int bulan, int tahun) {
     
     long jd = tanggal + (153 * m + 2) / 5 + 365 * y + y / 4 - y / 100 + y / 400 - 32045;
     
-    // Selisih hari dari tanggal referensi
-    long selisihHari = jd - refMasehi;
+    // Julian Day untuk tanggal referensi (16 Juli 622 M)
+    long jdRef = 16 + (153 * 4 + 2) / 5 + 365 * (622 + 4800) + (622 + 4800) / 4 - (622 + 4800) / 100 + (622 + 4800) / 400 - 32045;
     
-    // Konversi ke hari Hijriyah
-    long hariHijriyah = refHijriyah + selisihHari;
+    // Selisih hari sejak 1 Muharram 1 H
+    long selisihHari = jd - jdRef;
     
-    // Hitung tahun Hijriyah (1 tahun = 354.367056 hari)
-    int tahunHijriyah = (int)(hariHijriyah / 354.367056);
-    int sisaHari = (int)(hariHijriyah - (tahunHijriyah * 354.367056));
+    // Hitung tahun Hijriyah (perkiraan)
+    int tahunHijriyah = (int)(selisihHari / 354.36708) + 1;
+    
+    // Sisa hari dalam tahun Hijriyah
+    int sisaHari = (int)(selisihHari - (tahunHijriyah - 1) * 354.36708);
     
     // Nama bulan Hijriyah
     char *namaBulanHijriyah[] = {
@@ -154,27 +152,25 @@ void konversiKeHijriyah(int tanggal, int bulan, int tahun) {
         "Ramadan", "Syawal", "Dzulqa'dah", "Dzulhijjah"
     };
     
-    // Tentukan bulan dan tanggal Hijriyah
-    int bulanHijriyah = 0;
-    int tanggalHijriyah = 0;
-    
-    // Distribusi hari ke bulan-bulan Hijriyah
+    // Distribusi hari per bulan Hijriyah (bergantian 30-29)
     int hariPerBulan[] = {30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29};
     
+    // Tentukan bulan dan tanggal Hijriyah
+    int bulanHijriyah = 1;
+    int tanggalHijriyah = sisaHari + 1; // +1 karena mulai dari tanggal 1
+    
     for (int i = 0; i < 12; i++) {
-        if (sisaHari <= hariPerBulan[i]) {
-            bulanHijriyah = i + 1;
-            tanggalHijriyah = sisaHari;
+        if (tanggalHijriyah <= hariPerBulan[i]) {
             break;
         }
-        sisaHari -= hariPerBulan[i];
+        tanggalHijriyah -= hariPerBulan[i];
+        bulanHijriyah++;
     }
     
-    // Jika sisaHari masih ada, tambahkan ke tahun berikutnya
-    if (sisaHari > 0) {
-        tahunHijriyah++;
+    // Jika bulan melebihi 12, tambah tahun
+    if (bulanHijriyah > 12) {
         bulanHijriyah = 1;
-        tanggalHijriyah = sisaHari;
+        tahunHijriyah++;
     }
     
     // Nama bulan Masehi
@@ -184,12 +180,12 @@ void konversiKeHijriyah(int tanggal, int bulan, int tahun) {
     };
     
     // Tampilkan hasil konversi
-    printf("\n==============================================\n");
-    printf("           HASIL KONVERSI KALENDER           \n");
-    printf("==============================================\n");
-    printf("Tanggal Masehi: %d %s %d M\n", tanggal, namaBulanMasehi[bulan-1], tahun);
-    printf("Tanggal Hijriyah: %d %s %d H\n", tanggalHijriyah, namaBulanHijriyah[bulanHijriyah-1], tahunHijriyah);
-    printf("==============================================\n");
+    printf("\n=================================================================\n");
+    printf("||                   HASIL KONVERSI KALENDER                   ||\n");
+    printf("=================================================================\n");
+    printf("|| Tanggal Masehi  : %2d %s %4d M                        ||\n", tanggal, namaBulanMasehi[bulan-1], tahun);
+    printf("|| Tanggal Hijriyah: %2d %s %4d H                        ||\n", tanggalHijriyah, namaBulanHijriyah[bulanHijriyah-1], tahunHijriyah);
+    printf("=================================================================\n");
 }
 
 //======================================================
@@ -204,13 +200,14 @@ int main() {
 void menu() {
     int pilihan;
 
-    printf("==============================================\n\n");
-    printf("       PROGRAM KONVERSI MASEHI KE HIJRIYAH    \n\n");
-    printf("               Oleh Kalelfarrel97               \n");
-    printf("==============================================\n");
-    printf("1. Mulai Program\n");
-    printf("2. Keluar\n");
-    printf("==============================================\n");
+    printf("=================================================================\n");
+    printf("||              PROGRAM KONVERSI MASEHI KE HIJRIYAH            ||\n");
+    printf("=================================================================\n");
+    printf("||                      Oleh Kalelfarrel97                     ||\n");
+    printf("=================================================================\n");
+    printf("|| 1. Mulai Program                                            ||\n");
+    printf("|| 2. Keluar                                                   ||\n");
+    printf("=================================================================\n");
     printf("Masukkan Nomor Menu yang Anda Inginkan : ");
     pilihan = validasiAngka(1, 2, "Pilihan Menu");
 
@@ -228,31 +225,34 @@ void konversiHijriyah() {
     int tanggal, bulan, tahun, pilih;
     int maxDay;
     int valid = 0;
+    
+    system("cls"); // Untuk membersihkan layar (Windows)
 
-    printf("\n==============================================\n");
-    printf("       PROGRAM KONVERSI MASEHI KE HIJRIYAH    \n");
-    printf("              Oleh Kalelfarrel97               \n");
-    printf("==============================================\n\n");
+    printf("=================================================================\n");
+    printf("||              PROGRAM KONVERSI MASEHI KE HIJRIYAH           ||\n");
+    printf("=================================================================\n");
+    printf("||                      Oleh Kalelfarrel97                    ||\n");
+    printf("=================================================================\n");
 
-    printf("Daftar Bulan Masehi:\n");
-    printf(" [1] Januari       [7] Juli\n");
-    printf(" [2] Februari      [8] Agustus\n");
-    printf(" [3] Maret         [9] September\n");
-    printf(" [4] April         [10] Oktober\n");
-    printf(" [5] Mei           [11] November\n");
-    printf(" [6] Juni          [12] Desember\n");
-    printf("==============================================\n");
+    printf("|| Daftar Bulan Masehi:                                        ||\n");
+    printf("|| [1] Januari       [7] Juli                                  ||\n");
+    printf("|| [2] Februari      [8] Agustus                               ||\n");
+    printf("|| [3] Maret         [9] September                             ||\n");
+    printf("|| [4] April         [10] Oktober                              ||\n");
+    printf("|| [5] Mei           [11] November                             ||\n");
+    printf("|| [6] Juni          [12] Desember                             ||\n");
+    printf("=================================================================\n");
 
     // Input dan validasi tanggal, bulan, tahun
     do {
-        printf("Masukkan Tanggal (1-31): ");
-        tanggal = validasiAngka(1, 31, "Tanggal");
-
-        printf("Masukkan Bulan (1-12): ");
-        bulan = validasiAngka(1, 12, "Bulan");
-
         printf("Masukkan Tahun Masehi: ");
         tahun = validasiTahun("Tahun");
+        
+        printf("Masukkan Bulan (1-12): ");
+        bulan = validasiAngka(1, 12, "Bulan");
+        
+        printf("Masukkan Tanggal (1-31): ");
+        tanggal = validasiAngka(1, 31, "Tanggal");
 
         // Hitung maksimal hari untuk bulan & tahun tersebut
         if (bulan == 2) {
@@ -277,10 +277,11 @@ void konversiHijriyah() {
     // Lakukan konversi
     konversiKeHijriyah(tanggal, bulan, tahun);
 
-    printf("\n1. Ulangi Program\n");
-    printf("2. Kembali ke Menu Utama\n");
-    printf("3. Keluar\n");
-    printf("----------------------------------------------\n");
+    printf("\n=================================================================\n");
+    printf("|| 1. Ulangi Program                                            ||\n");
+    printf("|| 2. Kembali ke Menu Utama                                     ||\n");
+    printf("|| 3. Keluar                                                    ||\n");
+    printf("=================================================================\n");
     printf("Masukkan Pilihan Anda : ");
     pilih = validasiAngka(1, 3, "Pilihan");
 
